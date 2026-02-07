@@ -2,6 +2,8 @@ package com.lw.random_additons.common.handler;
 
 import com.lw.random_additons.cilent.handler.WirelessInput;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
@@ -17,10 +19,11 @@ public class KeyHandler {
     public static void init() {
         WirelessInputKey = new KeyBinding(
                 "key.random_additons.wireless_input",
+                KeyConflictContext.UNIVERSAL,
+                KeyModifier.CONTROL,
                 Keyboard.KEY_V,
                 "key.random_additons"
         );
-
         ClientRegistry.registerKeyBinding(WirelessInputKey);
     }
 
