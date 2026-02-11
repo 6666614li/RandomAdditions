@@ -128,8 +128,10 @@ dependencies {
 
     implementation rfg.deobf("curse.maven:theoneprobe-245211:2667280")
     implementation rfg.deobf("curse.maven:ae2extendedlife-570458:5411078")
+    implementation rfg.deobf ("curse.maven:thaumcraft-223628:2629023")
 
     implementation rfg.deobf ("curse.maven:baubles-227083:2518667")
+    implementation rfg.deobf ("curse.maven:MixinBooter-419286:7049694")
 
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
