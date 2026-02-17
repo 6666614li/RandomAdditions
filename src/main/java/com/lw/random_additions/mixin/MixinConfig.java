@@ -14,7 +14,7 @@ public class MixinConfig implements ILateMixinLoader {
     private static final Map<String, BooleanSupplier> MIXIN_CONFIGS = new LinkedHashMap<>();
 
     static {
-        addModdedMixinCFG("mixins.random_additons.thaumcraft.json", "thaumcraft");
+        addModdedMixinCFG("mixins.random_additions.thaumcraft.json", "thaumcraft");
     }
 
     @Override
