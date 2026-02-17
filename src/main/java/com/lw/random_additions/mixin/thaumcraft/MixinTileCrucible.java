@@ -1,11 +1,10 @@
-package com.lw.random_additons.mixin.thaumcraft;
+package com.lw.random_additions.mixin.thaumcraft;
 
-import com.lw.random_additons.config.RandomAdditonsConfig;
+import com.lw.random_additions.config.RandomAdditionsConfig;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.common.tiles.crafting.TileCrucible;
 
@@ -22,8 +21,8 @@ public class MixinTileCrucible {
             ),
             name = "ot"
     )
-    public AspectList onattemptSmelt(AspectList original, ItemStack item){
-        if (RandomAdditonsConfig.crucibleWhitelist(item)) {
+    public AspectList onAttemptSmelt(AspectList original, ItemStack item){
+        if (RandomAdditionsConfig.crucibleWhitelist(item)) {
             return null;
         }
         return original;

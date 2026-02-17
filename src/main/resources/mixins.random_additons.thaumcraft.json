@@ -1,12 +1,13 @@
 {
-	"package": "com.lw.random_additons.mixin.thaumcraft",
+	"package": "com.lw.random_additions.mixin.thaumcraft",
 	"required": true,
 	"refmap": "${mixin_refmap}",
 	"target": "@env(DEFAULT)",
 	"minVersion": "0.8.5",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-        "MixinTileCrucible"
+      "MixinTileCrucible",
+      "MixinTileSmelter"
     ],
 	"server": [],
 	"client": []

@@ -1,4 +1,4 @@
-package com.lw.random_additons.cilent.handler;
+package com.lw.random_additions.cilent.handler;
 
 import baubles.api.BaublesApi;
 
