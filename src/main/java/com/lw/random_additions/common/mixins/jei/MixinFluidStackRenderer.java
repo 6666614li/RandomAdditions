@@ -54,10 +54,7 @@ public class MixinFluidStackRenderer {
         ItemStack terminal = aeUtil.getWirelessTerminalFromPlayer(player);
         if (terminal.isEmpty()) return;
 
-        IGrid grid = aeUtil.getGridFromTerminal(terminal, player, player.getPosition());
-        if (grid == null) {
-            grid = aeUtil.getGridFromTerminalNBT(terminal, player);
-        }
+        IGrid grid = aeUtil.getGridFromTerminalForDisplay(terminal, player);
         if (grid == null) return;
 
         long fluidCount = aeUtil.getFluidCountInGrid(grid, fluidStack.getFluid());

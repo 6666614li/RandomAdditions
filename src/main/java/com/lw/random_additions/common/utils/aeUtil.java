@@ -35,6 +35,7 @@ import net.minecraftforge.fml.common.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ConcurrentModificationException;
 
 public class aeUtil {
 
@@ -95,11 +96,17 @@ public class aeUtil {
                 pos.getX(), pos.getY(), pos.getZ()
         );
 
-        if (!obj.rangeCheck()) return null;
+        try {
+            if (!obj.rangeCheck()) return null;
+        } catch (ConcurrentModificationException e) {
+            return null;
+        }
 
         IGridNode node = obj.getActionableNode();
         return node != null ? node.getGrid() : null;
     }
+
+
 
     /**
      * 检查玩家是否具有指定权限
@@ -159,6 +166,11 @@ public class aeUtil {
         return AEApi.instance().registries().wireless();
     }
 
+    @Nullable
+    public static IGrid getGridFromTerminalForDisplay(ItemStack terminal, EntityPlayer player) {
+        return getGridFromTerminalNBT(terminal, player);
+    }
+
     public static IGrid getGridFromTerminalNBT(ItemStack terminal, EntityPlayer player) {
         try {
             IWirelessTermHandler handler = aeUtil.getIWirelessTermRegistry().getWirelessTerminalHandler(terminal);
@@ -186,18 +198,22 @@ public class aeUtil {
     public static long getFluidCountInGrid(IGrid grid, Fluid targetFluid) {
         if (targetFluid == null) return 0;
 
-        IStorageGrid storage = grid.getCache(IStorageGrid.class);
-        IFluidStorageChannel fluidChannel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
-        IMEMonitor<IAEFluidStack> monitor = storage.getInventory(fluidChannel);
-        if (monitor == null) return 0;
+        try {
+            IStorageGrid storage = grid.getCache(IStorageGrid.class);
+            IFluidStorageChannel fluidChannel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
+            IMEMonitor<IAEFluidStack> monitor = storage.getInventory(fluidChannel);
+            if (monitor == null) return 0;
 
-        IItemList<IAEFluidStack> fluidList = monitor.getStorageList();
-        if (fluidList == null || fluidList.isEmpty()) return 0;
+            IItemList<IAEFluidStack> fluidList = monitor.getStorageList();
+            if (fluidList == null || fluidList.isEmpty()) return 0;
 
-        IAEFluidStack searchStack = fluidChannel.createStack(new FluidStack(targetFluid, 1));
-        if (searchStack == null) return 0;
+            IAEFluidStack searchStack = fluidChannel.createStack(new FluidStack(targetFluid, 1));
+            if (searchStack == null) return 0;
 
-        IAEFluidStack found = fluidList.findPrecise(searchStack);
-        return found != null ? found.getStackSize() : 0;
+            IAEFluidStack found = fluidList.findPrecise(searchStack);
+            return found != null ? found.getStackSize() : 0;
+        } catch (ConcurrentModificationException | NullPointerException e) {
+            return 0;
+        }
     }
 }

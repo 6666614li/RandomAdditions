@@ -34,6 +34,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.util.ConcurrentModificationException;
+
 
 public class MEStorageInfoProvider implements IProbeInfoProvider {
 
@@ -48,7 +50,7 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
         ItemStack terminal = aeUtil.getWirelessTerminalFromPlayer(player);
         if (terminal.isEmpty()) return;
     
-        IGrid grid = aeUtil.getGridFromTerminal(terminal, player, player.getPosition());
+        IGrid grid = aeUtil.getGridFromTerminalForDisplay(terminal, player);
         if (grid == null) return;
     
         long count = 0;
@@ -121,14 +123,18 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
     public static long getItemCountInGridByItemStack(IGrid grid, ItemStack targetStack) {
         if (targetStack.isEmpty()) return 0;
 
-        IItemList<IAEItemStack> list = getItemStorageList(grid);
-        if (list == null || list.isEmpty()) return 0;
+        try {
+            IItemList<IAEItemStack> list = getItemStorageList(grid);
+            if (list == null || list.isEmpty()) return 0;
 
-        IAEItemStack searchStack = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createStack(targetStack);
-        if (searchStack == null) return 0;
+            IAEItemStack searchStack = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createStack(targetStack);
+            if (searchStack == null) return 0;
 
-        IAEItemStack found = list.findPrecise(searchStack);
-        return found != null ? found.getStackSize() : 0;
+            IAEItemStack found = list.findPrecise(searchStack);
+            return found != null ? found.getStackSize() : 0;
+        } catch (ConcurrentModificationException | NullPointerException e) {
+            return 0;
+        }
     }
 
     private static boolean isFluidBlock(IBlockState state) {
@@ -165,7 +171,6 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
     public static class EventMEStorageTooltip {
 
         private static long lastQueryTime = 0;
-        private static long hoverStartTime = 0;
         private static ItemStack lastQueriedItem = ItemStack.EMPTY;
         private static long cachedCount = 0;
         private static boolean cachedCraftable = false;
@@ -185,7 +190,7 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
                 long now = Minecraft.getSystemTime();
                 boolean hitCache = now - lastQueryTime < 1000
                         && !lastQueriedItem.isEmpty()
-                        && ItemStack.areItemStacksEqualUsingNBTShareTag(lastQueriedItem, itemStack);
+                        && isSameTooltipTarget(lastQueriedItem, itemStack);
 
                 StringBuilder tooltipText = new StringBuilder();
 
@@ -195,16 +200,11 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
                     }
                     tooltipText.append("§7").append(I18n.format("random_additions.me_storage.count", cachedCount));
                 } else {
-                    hoverStartTime = now;
-
                     ItemStack terminal = aeUtil.getWirelessTerminalFromPlayer(player);
                     if (terminal == null || terminal.isEmpty()) return;
 
-                    IGrid grid = aeUtil.getGridFromTerminal(terminal, player, player.getPosition());
-                    if (grid == null) {
-                        grid = aeUtil.getGridFromTerminalNBT(terminal, player);
-                        if (grid == null) return;
-                    }
+                    IGrid grid = aeUtil.getGridFromTerminalForDisplay(terminal, player);
+                    if (grid == null) return;
 
                     long count;
                     if (itemStack.hasTagCompound()) {
@@ -216,6 +216,7 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
 
                     lastQueryTime = now;
                     lastQueriedItem = itemStack.copy();
+                    lastQueriedItem.setCount(1);
                     cachedCount = count;
                     cachedCraftable = craftable;
 
@@ -229,6 +230,11 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
                     event.getToolTip().add(tooltipText.toString());
                 }
             }
+        }
+
+        private static boolean isSameTooltipTarget(ItemStack cachedStack, ItemStack itemStack) {
+            return ItemStack.areItemsEqual(cachedStack, itemStack)
+                    && ItemStack.areItemStackTagsEqual(cachedStack, itemStack);
         }
 
         /**
@@ -246,7 +252,7 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
 
                 IAEItemStack found = list.findPrecise(searchStack);
                 return found != null ? found.getStackSize() : 0;
-            } catch (NullPointerException e) {
+            } catch (ConcurrentModificationException | NullPointerException e) {
                 return 0;
             }
         }
