@@ -35,15 +35,28 @@ public class MEGirdNodeAmount implements IProbeInfoProvider {
         TileEntity tileEntity = world.getTileEntity(iProbeHitData.getPos());
         if (tileEntity == null) return;
 
-        IGrid grid = getGridFromTileEntity(tileEntity, iProbeHitData);
+        IGrid grid;
+        try {
+            grid = getGridFromTileEntity(tileEntity, iProbeHitData);
+        } catch (RuntimeException e) {
+            return;
+        }
         if (grid == null) return;
 
-        int nodeCount = grid.getNodes().size();
+        int nodeCount;
+        try {
+            grid.getNodes();
+            nodeCount = grid.getNodes().size();
+        } catch (RuntimeException e) {
+            return;
+        }
         String nodeInfo = new TextComponentTranslation("random_additions.me_grid.node_count", nodeCount).getFormattedText();
         iProbeInfo.text(nodeInfo);
     }
 
     private IGrid getGridFromTileEntity(TileEntity tileEntity, IProbeHitData hitData) {
+        if (tileEntity == null) return null;
+
         IGrid grid = null;
 
         if (tileEntity instanceof IActionHost) {
