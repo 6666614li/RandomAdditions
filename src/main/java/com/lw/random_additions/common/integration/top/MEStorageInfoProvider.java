@@ -113,7 +113,9 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
         if (grid == null) return null;
 
         IStorageGrid storage = grid.getCache(IStorageGrid.class);
+        if (storage == null) return null;
         IItemStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+        if (channel == null) return null;
         IMEMonitor<IAEItemStack> monitor = storage.getInventory(channel);
         if (monitor == null) return null;
 
@@ -125,9 +127,11 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
 
         try {
             IItemList<IAEItemStack> list = getItemStorageList(grid);
-            if (list == null || list.isEmpty()) return 0;
+            if (list == null) return 0;
 
-            IAEItemStack searchStack = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createStack(targetStack);
+            IItemStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+            if (channel == null) return 0;
+            IAEItemStack searchStack = channel.createStack(targetStack);
             if (searchStack == null) return 0;
 
             IAEItemStack found = list.findPrecise(searchStack);
@@ -247,7 +251,9 @@ public class MEStorageInfoProvider implements IProbeInfoProvider {
                 IItemList<IAEItemStack> list = MEStorageInfoProvider.getItemStorageList(grid);
                 if (list == null) return 0;
 
-                IAEItemStack searchStack = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class).createStack(targetStack);
+                IItemStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+                if (channel == null) return 0;
+                IAEItemStack searchStack = channel.createStack(targetStack);
                 if (searchStack == null) return 0;
 
                 IAEItemStack found = list.findPrecise(searchStack);

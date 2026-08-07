@@ -7,7 +7,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.NonNullList;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import slimeknights.mantle.client.book.BookTransformer;
@@ -25,18 +24,21 @@ import slimeknights.tconstruct.library.modifiers.IModifier;
 import slimeknights.tconstruct.library.modifiers.IModifierDisplay;
 import slimeknights.tconstruct.library.modifiers.IToolMod;
 import slimeknights.tconstruct.library.modifiers.ModifierNBT;
-import slimeknights.tconstruct.library.modifiers.TinkerGuiException;
 import slimeknights.tconstruct.library.utils.TagUtil;
 import slimeknights.tconstruct.library.utils.TinkerUtil;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 
 public class ModRemoveInscription implements IModifier, IModifierDisplay {
 
     public static final String IDENTIFIER = "remove_inscription";
     private static final String EXTRA_TRAIT_PREFIX = "extratrait";
+    private static final String EXTRA_TRAIT_TAG = "extraTrait";
+    private static final String EVOLVED_TRAIT = "tconevo.evolved";
+    private static final String EVOLVED_TRAIT_PREFIX = "tconevo.draconic_";
+    private static final String EVOLVED_TIER_TAG = "EvolvedTier";
+    private static final String EVOLVED_ENERGY_TAG = "EvolvedEnergy";
     private static final int COLOR = 0x8B4513;
 
     private final List<ItemStack> recipeItems = new ArrayList<>();
@@ -157,26 +159,57 @@ public class ModRemoveInscription implements IModifier, IModifierDisplay {
 
     @Override
     public void applyEffect(NBTTagCompound rootCompound, NBTTagCompound modifierTag) {
+        Set<String> inscriptionTraits = new HashSet<>();
+        NBTTagList modifiersTag = TagUtil.getModifiersTagList(rootCompound);
+        for (int i = 0; i < modifiersTag.tagCount(); i++) {
+            NBTTagCompound tag = modifiersTag.getCompoundTagAt(i);
+            if (tag.getString("identifier").contains(EXTRA_TRAIT_PREFIX)) {
+                String trait = tag.getString(EXTRA_TRAIT_TAG);
+                if (!trait.isEmpty()) {
+                    inscriptionTraits.add(trait);
+                }
+            }
+        }
+
         NBTTagList baseModifiers = TagUtil.getBaseModifiersTagList(rootCompound);
         NBTTagList newBaseModifiers = new NBTTagList();
         for (int i = 0; i < baseModifiers.tagCount(); i++) {
             String id = baseModifiers.getStringTagAt(i);
-            if (!id.contains(EXTRA_TRAIT_PREFIX) && !id.equals(IDENTIFIER)) {
+            if (!id.contains(EXTRA_TRAIT_PREFIX) && !id.equals(IDENTIFIER)
+                    && !inscriptionTraits.contains(id)
+                    && !(inscriptionTraits.contains(EVOLVED_TRAIT) && id.startsWith(EVOLVED_TRAIT_PREFIX))) {
                 newBaseModifiers.appendTag(new NBTTagString(id));
             }
         }
         TagUtil.setBaseModifiersTagList(rootCompound, newBaseModifiers);
 
-        NBTTagList modifiersTag = TagUtil.getModifiersTagList(rootCompound);
         NBTTagList newModifiersTag = new NBTTagList();
         for (int i = 0; i < modifiersTag.tagCount(); i++) {
             NBTTagCompound tag = modifiersTag.getCompoundTagAt(i);
             String id = tag.getString("identifier");
-            if (!id.contains(EXTRA_TRAIT_PREFIX) && !id.equals(IDENTIFIER)) {
+            if (!id.contains(EXTRA_TRAIT_PREFIX) && !id.equals(IDENTIFIER)
+                    && !inscriptionTraits.contains(id)
+                    && !(inscriptionTraits.contains(EVOLVED_TRAIT) && id.startsWith(EVOLVED_TRAIT_PREFIX))) {
                 newModifiersTag.appendTag(tag);
             }
         }
         TagUtil.setModifiersTagList(rootCompound, newModifiersTag);
+
+        NBTTagList traits = TagUtil.getTraitsTagList(rootCompound);
+        NBTTagList newTraits = new NBTTagList();
+        for (int i = 0; i < traits.tagCount(); i++) {
+            String id = traits.getStringTagAt(i);
+            if (!inscriptionTraits.contains(id)
+                    && !(inscriptionTraits.contains(EVOLVED_TRAIT) && id.startsWith(EVOLVED_TRAIT_PREFIX))) {
+                newTraits.appendTag(new NBTTagString(id));
+            }
+        }
+        TagUtil.setTraitsTagList(rootCompound, newTraits);
+
+        if (inscriptionTraits.contains(EVOLVED_TRAIT)) {
+            rootCompound.removeTag(EVOLVED_TIER_TAG);
+            rootCompound.removeTag(EVOLVED_ENERGY_TAG);
+        }
     }
 
     @Override
@@ -227,37 +260,30 @@ public class ModRemoveInscription implements IModifier, IModifierDisplay {
             public void transform(BookData book) {
                 for (SectionData section : book.sections) {
                     if (!"modifiers".equals(section.name)) continue;
-
                     for (PageData existing : section.pages) {
-                        if (existing.content instanceof ContentModifier) {
-                            if (ModRemoveInscription.IDENTIFIER.equals(
-                                    ((ContentModifier) existing.content).modifierName)) {
-                                return;
-                            }
+                        if (existing.content instanceof ContentModifier
+                                && IDENTIFIER.equals(((ContentModifier) existing.content).modifierName)) {
+                            return;
                         }
                     }
-
                     ContentModifier content = new ContentModifier();
-                    content.modifierName = ModRemoveInscription.IDENTIFIER;
+                    content.modifierName = IDENTIFIER;
                     content.text = new TextData[]{
                             new TextData(I18n.format("modifier.remove_inscription.book.text"))
                     };
                     content.effects = new String[]{
                             I18n.format("modifier.remove_inscription.book.effect1"),
-                            I18n.format("modifier.remove_inscription.book.effect2"),
+                            I18n.format("modifier.remove_inscription.book.effect2")
                     };
-
                     PageData page = new PageData(true);
-                    page.name = ModRemoveInscription.IDENTIFIER;
+                    page.name = IDENTIFIER;
                     page.source = section.source;
                     page.parent = section;
                     page.content = content;
                     page.load();
-
                     section.pages.add(page);
-
                     if (!section.pages.isEmpty() && section.pages.get(0).content instanceof ContentListing) {
-                        IModifier modifier = TinkerRegistry.getModifier(ModRemoveInscription.IDENTIFIER);
+                        IModifier modifier = TinkerRegistry.getModifier(IDENTIFIER);
                         if (modifier != null) {
                             ((ContentListing) section.pages.get(0).content)
                                     .addEntry(modifier.getLocalizedName(), page);
@@ -267,6 +293,6 @@ public class ModRemoveInscription implements IModifier, IModifierDisplay {
                 }
             }
         });
-
     }
+
 }
