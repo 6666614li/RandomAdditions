@@ -2,6 +2,7 @@ package com.lw.random_additions.common.mixins.ae2;
 
 import appeng.client.gui.implementations.GuiPatternTerm;
 import appeng.client.gui.widgets.GuiImgButton;
+import com.lw.random_additions.Tags;
 import com.lw.random_additions.api.PatternUploadScreen;
 import com.lw.random_additions.common.integration.ae2.patternupload.PatternUploadTargetInfo;
 import com.lw.random_additions.common.network.NetworkHandler;
@@ -10,8 +11,10 @@ import com.lw.random_additions.common.network.PacketPatternUploadSelect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -40,6 +43,26 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
 
     @Unique
     private static final int RandomAdditions$PATTERN_UPLOAD_MAX_ROWS = 12;
+
+    @Unique
+    private static final ResourceLocation RandomAdditions$PATTERN_UPLOAD_BUTTON = new ResourceLocation(
+            Tags.MOD_ID, "textures/gui/pattern_upload/button.png");
+
+    @Unique
+    private static final ResourceLocation RandomAdditions$PATTERN_UPLOAD_BUTTON_HIGHLIGHTED = new ResourceLocation(
+            Tags.MOD_ID, "textures/gui/pattern_upload/button_highlighted.png");
+
+    @Unique
+    private static final ResourceLocation RandomAdditions$PATTERN_UPLOAD_BUTTON_DISABLED = new ResourceLocation(
+            Tags.MOD_ID, "textures/gui/pattern_upload/button_disabled.png");
+
+    @Unique
+    private static final ResourceLocation RandomAdditions$PATTERN_UPLOAD_SCROLLER = new ResourceLocation(
+            Tags.MOD_ID, "textures/gui/pattern_upload/small_scroller.png");
+
+    @Unique
+    private static final ResourceLocation RandomAdditions$PATTERN_UPLOAD_BACKGROUND = new ResourceLocation(
+            Tags.MOD_ID, "textures/gui/pattern_upload/background.png");
 
     @Shadow
     private GuiImgButton encodeBtn;
@@ -119,9 +142,10 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
         final int rowHeight = RandomAdditions$PATTERN_UPLOAD_ROW_HEIGHT;
         final int rows = this.RandomAdditions$getVisibleRows();
 
-        Gui.drawRect(x - 2, y - 32, x + width + 2, y + Math.max(1, rows) * rowHeight + 2, 0xE0101010);
-        minecraft.fontRenderer.drawStringWithShadow(I18n.format("random_additions.ae2.pattern_upload.title"),
-                x, y - 29, 0xFFFFFF);
+        this.RandomAdditions$drawPatternUploadPanel(minecraft, x - 3, y - 33, width + 6,
+                Math.max(1, rows) * rowHeight + 36);
+        minecraft.fontRenderer.drawString(I18n.format("random_additions.ae2.pattern_upload.title"),
+                x, y - 29, 0x404040);
         this.RandomAdditions$drawPatternUploadSearchBox(minecraft, x, y, width);
 
         if (this.RandomAdditions$filteredPatternUploadTargets.isEmpty()) {
@@ -286,19 +310,22 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
     @Unique
     private void RandomAdditions$drawPatternUploadSearchBox(final Minecraft minecraft, final int x, final int y,
                                                            final int width) {
-        Gui.drawRect(x, y - 18, x + width, y - 4,
-                this.RandomAdditions$patternUploadSearchFocused ? 0xFF303050 : 0xFF202020);
+        this.RandomAdditions$drawPatternUploadTexture(minecraft,
+                this.RandomAdditions$patternUploadSearchFocused
+                        ? RandomAdditions$PATTERN_UPLOAD_BUTTON_HIGHLIGHTED
+                        : RandomAdditions$PATTERN_UPLOAD_BUTTON,
+                x, y - 18, width, 14);
         final String searchText = this.RandomAdditions$patternUploadSearch.isEmpty()
                 ? I18n.format("random_additions.ae2.pattern_upload.search")
                 : this.RandomAdditions$patternUploadSearch;
         minecraft.fontRenderer.drawString(searchText, x + 4, y - 15,
-                this.RandomAdditions$patternUploadSearch.isEmpty() ? 0x777777 : 0xFFFFFF);
+                this.RandomAdditions$patternUploadSearch.isEmpty() ? 0x777777 : 0x303030);
     }
 
     @Unique
     private void RandomAdditions$drawPatternUploadEmptyResult(final Minecraft minecraft, final int x, final int y) {
-        minecraft.fontRenderer.drawStringWithShadow(I18n.format("random_additions.ae2.pattern_upload.no_results"),
-                x + 4, y + 5, 0xAAAAAA);
+        minecraft.fontRenderer.drawString(I18n.format("random_additions.ae2.pattern_upload.no_results"),
+                x + 4, y + 5, 0x606060);
     }
 
     @Unique
@@ -318,8 +345,10 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
                                                            final int mouseX, final int mouseY, final int x,
                                                            final int rowY, final int width, final int rowHeight) {
         final boolean hovered = this.RandomAdditions$isInRect(mouseX, mouseY, x, rowY, width, rowHeight);
-        final int color = target.isFull() ? (hovered ? 0xAA552222 : 0x88442222) : (hovered ? 0xAA555577 : 0x88333355);
-        Gui.drawRect(x, rowY, x + width, rowY + rowHeight, color);
+        final ResourceLocation texture = target.isFull()
+                ? RandomAdditions$PATTERN_UPLOAD_BUTTON_DISABLED
+                : hovered ? RandomAdditions$PATTERN_UPLOAD_BUTTON_HIGHLIGHTED : RandomAdditions$PATTERN_UPLOAD_BUTTON;
+        this.RandomAdditions$drawPatternUploadTexture(minecraft, texture, x, rowY, width, rowHeight);
 
         final ItemStack icon = target.getIcon();
         if (!icon.isEmpty()) {
@@ -329,10 +358,10 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
         final String suffix = this.RandomAdditions$getPatternUploadTargetSuffix(target);
         final int suffixWidth = suffix.isEmpty() ? 0 : minecraft.fontRenderer.getStringWidth(suffix) + 4;
         final String name = minecraft.fontRenderer.trimStringToWidth(target.getName(), width - 22 - suffixWidth);
-        minecraft.fontRenderer.drawStringWithShadow(name, x + 20, rowY + 5, target.isFull() ? 0xAAAAAA : 0xFFFFFF);
+        minecraft.fontRenderer.drawString(name, x + 20, rowY + 5, target.isFull() ? 0x777777 : 0x303030);
         if (!suffix.isEmpty()) {
-            minecraft.fontRenderer.drawStringWithShadow(suffix, x + width - suffixWidth,
-                    rowY + 5, target.isFull() ? 0xFF5555 : 0xCCCCCC);
+            minecraft.fontRenderer.drawString(suffix, x + width - suffixWidth,
+                    rowY + 5, target.isFull() ? 0xAA3333 : 0x606060);
         }
     }
 
@@ -350,14 +379,51 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
         if (rows <= 0 || this.RandomAdditions$filteredPatternUploadTargets.size() <= rows) {
             return;
         }
-        final int barX = x + width - 3;
+        final int barX = x + width - 7;
         final int listHeight = rows * rowHeight;
         final int total = this.RandomAdditions$filteredPatternUploadTargets.size();
-        final int thumbHeight = Math.max(8, listHeight * rows / total);
+        final int thumbHeight = 15;
         final int maxOffset = Math.max(1, total - rows);
         final int thumbY = y + (listHeight - thumbHeight) * this.RandomAdditions$patternUploadScrollOffset / maxOffset;
-        Gui.drawRect(barX, y, barX + 2, y + listHeight, 0xAA111111);
-        Gui.drawRect(barX, thumbY, barX + 2, thumbY + thumbHeight, 0xFFE0E0E0);
+        Minecraft minecraft = Minecraft.getMinecraft();
+        this.RandomAdditions$drawPatternUploadPanel(minecraft, barX + 1, y, 5, listHeight);
+        minecraft.getTextureManager().bindTexture(RandomAdditions$PATTERN_UPLOAD_SCROLLER);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Gui.drawModalRectWithCustomSizedTexture(barX, thumbY, 0, 0, 7, thumbHeight, 7, 15);
+    }
+
+    @Unique
+    private void RandomAdditions$drawPatternUploadTexture(final Minecraft minecraft, final ResourceLocation texture,
+                                                          final int x, final int y, final int width, final int height) {
+        minecraft.getTextureManager().bindTexture(texture);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 200, 20);
+    }
+
+    @Unique
+    private void RandomAdditions$drawPatternUploadPanel(final Minecraft minecraft, final int x, final int y,
+                                                        final int width, final int height) {
+        final int border = 2;
+        final int innerWidth = Math.max(0, width - border * 2);
+        final int innerHeight = Math.max(0, height - border * 2);
+        minecraft.getTextureManager().bindTexture(RandomAdditions$PATTERN_UPLOAD_BACKGROUND);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+
+        Gui.drawScaledCustomSizeModalRect(x + border, y + border, border, border, 252, 252,
+                innerWidth, innerHeight, 256, 256);
+        Gui.drawScaledCustomSizeModalRect(x + border, y, border, 0, 252, border,
+                innerWidth, border, 256, 256);
+        Gui.drawScaledCustomSizeModalRect(x + border, y + height - border, border, 254, 252, border,
+                innerWidth, border, 256, 256);
+        Gui.drawScaledCustomSizeModalRect(x, y + border, 0, border, border, 252,
+                border, innerHeight, 256, 256);
+        Gui.drawScaledCustomSizeModalRect(x + width - border, y + border, 254, border, border, 252,
+                border, innerHeight, 256, 256);
+        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, border, border, 256, 256);
+        Gui.drawModalRectWithCustomSizedTexture(x + width - border, y, 254, 0, border, border, 256, 256);
+        Gui.drawModalRectWithCustomSizedTexture(x, y + height - border, 0, 254, border, border, 256, 256);
+        Gui.drawModalRectWithCustomSizedTexture(x + width - border, y + height - border,
+                254, 254, border, border, 256, 256);
     }
 
     @Unique
