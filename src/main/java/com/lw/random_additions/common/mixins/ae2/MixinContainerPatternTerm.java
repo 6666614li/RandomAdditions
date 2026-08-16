@@ -46,6 +46,15 @@ public abstract class MixinContainerPatternTerm implements PatternMachineType, P
     private static final long RandomAdditions$PATTERN_UPLOAD_TIMEOUT_MS = 15_000L;
 
     @Unique
+    private static final int RandomAdditions$BLANK_PATTERN_NOT_FOUND = 0;
+
+    @Unique
+    private static final int RandomAdditions$BLANK_PATTERN_FROM_NETWORK = 1;
+
+    @Unique
+    private static final int RandomAdditions$BLANK_PATTERN_FROM_SLOT = 2;
+
+    @Unique
     private String RandomAdditions$jeiMachineType = "";
 
     @Unique
@@ -191,13 +200,14 @@ public abstract class MixinContainerPatternTerm implements PatternMachineType, P
             return;
         }
 
-        if (!this.RandomAdditions$extractBlankPattern(grid)) {
+        final int blankPatternSource = this.RandomAdditions$consumeBlankPattern(grid);
+        if (blankPatternSource == RandomAdditions$BLANK_PATTERN_NOT_FOUND) {
             this.RandomAdditions$sendPatternUploadStatus(player, "no_blank");
             return;
         }
 
         if (!group.insert(encodedPattern)) {
-            this.RandomAdditions$returnBlankPattern(grid);
+            this.RandomAdditions$returnBlankPattern(grid, blankPatternSource);
             this.RandomAdditions$sendPatternUploadStatus(player, "failed");
             return;
         }
@@ -359,24 +369,57 @@ public abstract class MixinContainerPatternTerm implements PatternMachineType, P
     }
 
     @Unique
-    private boolean RandomAdditions$extractBlankPattern(final IGrid grid) {
+    private int RandomAdditions$consumeBlankPattern(final IGrid grid) {
         final IMEInventory<IAEItemStack> inventory = this.RandomAdditions$getNetworkInventory(grid);
         final IAEItemStack blank = this.RandomAdditions$blankPatternStack();
-        if (inventory == null || blank == null) {
-            return false;
+        if (inventory != null && blank != null) {
+            final IAEItemStack extracted = inventory.extractItems(blank, Actionable.MODULATE,
+                    ((ContainerPatternEncoder) (Object) this).getActionSource());
+            if (extracted != null && extracted.getStackSize() > 0) {
+                return RandomAdditions$BLANK_PATTERN_FROM_NETWORK;
+            }
         }
-        final IAEItemStack extracted = inventory.extractItems(blank, Actionable.MODULATE,
-                ((ContainerPatternEncoder) (Object) this).getActionSource());
-        return extracted != null && extracted.getStackSize() > 0;
+
+        final ItemStack slotStack = this.patternSlotIN.getStack();
+        if (slotStack.isEmpty() || !AEApi.instance().definitions().materials().blankPattern().isSameAs(slotStack)) {
+            return RandomAdditions$BLANK_PATTERN_NOT_FOUND;
+        }
+
+        final ItemStack remaining = slotStack.copy();
+        remaining.shrink(1);
+        this.patternSlotIN.putStack(remaining.isEmpty() ? ItemStack.EMPTY : remaining);
+        return RandomAdditions$BLANK_PATTERN_FROM_SLOT;
     }
 
     @Unique
-    private void RandomAdditions$returnBlankPattern(final IGrid grid) {
+    private void RandomAdditions$returnBlankPattern(final IGrid grid, final int source) {
+        if (source == RandomAdditions$BLANK_PATTERN_FROM_SLOT && this.RandomAdditions$returnBlankPatternToSlot()) {
+            return;
+        }
+
         final IMEInventory<IAEItemStack> inventory = this.RandomAdditions$getNetworkInventory(grid);
         final IAEItemStack blank = this.RandomAdditions$blankPatternStack();
         if (inventory != null && blank != null) {
             inventory.injectItems(blank, Actionable.MODULATE, ((ContainerPatternEncoder) (Object) this).getActionSource());
         }
+    }
+
+    @Unique
+    private boolean RandomAdditions$returnBlankPatternToSlot() {
+        final ItemStack slotStack = this.patternSlotIN.getStack();
+        if (slotStack.isEmpty()) {
+            this.patternSlotIN.putStack(this.RandomAdditions$blankPatternItemStack());
+            return true;
+        }
+        if (!AEApi.instance().definitions().materials().blankPattern().isSameAs(slotStack)
+                || slotStack.getCount() >= slotStack.getMaxStackSize()) {
+            return false;
+        }
+
+        final ItemStack returned = slotStack.copy();
+        returned.grow(1);
+        this.patternSlotIN.putStack(returned);
+        return true;
     }
 
     @Unique
