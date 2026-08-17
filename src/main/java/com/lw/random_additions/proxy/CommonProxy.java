@@ -2,6 +2,7 @@ package com.lw.random_additions.proxy;
 
 import com.lw.random_additions.common.init.Mods;
 import com.lw.random_additions.common.integration.ae2.patternupload.PatternUploadTargetInfo;
+import com.lw.random_additions.common.integration.thaumcraft.InfusionInterceptorRecipe;
 import com.lw.random_additions.common.integration.tconstruct.ModRemoveInscription;
 import com.lw.random_additions.misc.BlockRegister;
 import com.lw.random_additions.misc.ItemRegister;
@@ -28,6 +29,9 @@ public class CommonProxy {
     }
 
     public void postInit(FMLPostInitializationEvent event) {
+        if (Mods.THAUMCRAFT.isLoaded()) {
+            InfusionInterceptorRecipe.register();
+        }
         registerTConstructModifiers();
     }
 

@@ -30,12 +30,12 @@ public class BlockInfusionInterceptor extends BlockContainer implements IInfusio
     }
 
     @Override
-    public TileEntity createNewTileEntity(final World world, final int metadata) {
+    public TileEntity createNewTileEntity(@Nonnull final World world, final int metadata) {
         return new TileInfusionInterceptor();
     }
 
     @Override
-    public EnumBlockRenderType getRenderType(final IBlockState state) {
+    public EnumBlockRenderType getRenderType(@Nonnull final IBlockState state) {
         return EnumBlockRenderType.MODEL;
     }
 
@@ -46,7 +46,7 @@ public class BlockInfusionInterceptor extends BlockContainer implements IInfusio
 
     @Override
     public float getStabilizationAmount(final World world, final BlockPos pos) {
-        return 20.0F;
+        return 10.0F;
     }
 
     @Override
