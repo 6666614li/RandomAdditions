@@ -8,6 +8,7 @@ public enum Mods {
     RD("randomthings"),
     AE2FC("ae2fc"),
     MMCE("modularmachinery"),
+    THAUMCRAFT("thaumcraft"),
     TC("tconstruct"),
     TOP("theoneprobe");
 

@@ -170,6 +170,7 @@ dependencies {
     compileOnly rfg.deobf ("curse.maven:brandons-core-231382:3408276")
     compileOnly rfg.deobf ("curse.maven:QuantumThings-1387363:7931375")
     compileOnly rfg.deobf("curse.maven:mmce-817377:6945422")
+    compileOnly rfg.deobf ("curse.maven:ThaumicEnergisticsExtendedLife-849094:8416527")
 
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"

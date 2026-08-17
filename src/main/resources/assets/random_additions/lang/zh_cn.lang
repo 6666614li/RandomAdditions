@@ -22,6 +22,8 @@ random_additions.ae2.pattern_upload.no_blank=ME 网络中没有空白样板
 random_additions.ae2.pattern_upload.failed=样板发送失败
 random_additions.ae2.pattern_upload.success=样板已发送
 
+tile.random_additions.infusion_interceptor.name=注魔截流者
+
 modifier.remove_inscription.name=忘却
 modifier.remove_inscription.desc=§o从头再来！§r\n清除武器上的所有刻印。
 modifier.remove_inscription.book.text=从头再来！清除武器上的所有刻印，移除所有额外特性。

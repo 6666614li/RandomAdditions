@@ -1,4 +1,5 @@
 key.random_additions=RandomAdditions
+
 key.random_additions.wireless_input=Stow stack in hand into ME System
 key.random_additions.open_bauble_gui=Open DislocatorAdvanced GUI
 key.random_additions.time_bottle=Use TIAB
@@ -22,8 +23,11 @@ random_additions.ae2.pattern_upload.no_blank=No blank pattern in the ME network
 random_additions.ae2.pattern_upload.failed=Failed to send pattern
 random_additions.ae2.pattern_upload.success=Pattern sent
 
+tile.random_additions.infusion_interceptor.name=Infusion Interceptor
+
 modifier.remove_inscription.name=Forget
 modifier.remove_inscription.desc=§oClean slate!§r\nRemoves all inscriptions from the tool.
 modifier.remove_inscription.book.text=A clean slate! Removes all inscriptions (embossments) from your tool, freeing it from extra traits.
 modifier.remove_inscription.book.effect1=Removes all inscriptions from the tool
 modifier.remove_inscription.book.effect2=Can be applied again after adding new inscriptions
+
