@@ -208,13 +208,14 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
         return this.RandomAdditions$showPatternUploadTargets;
     }
 
-    protected void keyTyped(final char typedChar, final int keyCode) throws IOException {
+    protected void func_73869_a(final char typedChar, final int keyCode) throws IOException {
         if (this.RandomAdditions$handlePatternUploadKeyTyped(typedChar, keyCode)) {
             return;
         }
 
         final Minecraft minecraft = Minecraft.getMinecraft();
-        if (keyCode == Keyboard.KEY_ESCAPE || minecraft.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) {
+        if (keyCode == Keyboard.KEY_ESCAPE
+                || minecraft.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) {
             minecraft.player.closeScreen();
         }
     }
