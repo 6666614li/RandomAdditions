@@ -208,18 +208,6 @@ public abstract class MixinGuiPatternTerm implements PatternUploadScreen {
         return this.RandomAdditions$showPatternUploadTargets;
     }
 
-    protected void func_73869_a(final char typedChar, final int keyCode) throws IOException {
-        if (this.RandomAdditions$handlePatternUploadKeyTyped(typedChar, keyCode)) {
-            return;
-        }
-
-        final Minecraft minecraft = Minecraft.getMinecraft();
-        if (keyCode == Keyboard.KEY_ESCAPE
-                || minecraft.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) {
-            minecraft.player.closeScreen();
-        }
-    }
-
     @Inject(method = {"actionPerformed", "func_146284_a"}, at = @At("HEAD"), cancellable = true)
     private void RandomAdditions$handlePatternUploadEncodeAction(final GuiButton button, final CallbackInfo ci) {
         if (button == this.encodeBtn && this.RandomAdditions$isRightMouseClick()) {

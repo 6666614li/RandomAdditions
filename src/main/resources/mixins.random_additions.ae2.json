@@ -18,6 +18,7 @@
     "MixinAEBaseGui",
     "MixinAE2NetworkHandler",
     "MixinGuiPatternTerm",
-    "MixinGuiImgButton"
+    "MixinGuiImgButton",
+    "MixinGuiMEMonitorablePatternUpload"
   ]
 }
